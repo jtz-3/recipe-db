@@ -8,10 +8,14 @@ CREATE TABLE Ingredient (
     FiberPerGram REAL NOT NULL
 );
 
+-- Recipe steps will be delimited with a special character
+-- so that they can later be treated like a list.
 CREATE TABLE Recipe (
     Id INTEGER PRIMARY KEY,
     Name TEXT NOT NULL UNIQUE,
-    BaseServings INTEGER NOT NULL
+    Steps TEXT NOT NULL,
+    BaseServings INTEGER NOT NULL,
+    Notes TEXT
 );
 
 CREATE TABLE RecipeIngredient (
