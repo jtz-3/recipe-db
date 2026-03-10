@@ -9,44 +9,41 @@ class NutritionInfo:
                     'fat': 'FatPerGram',
                     'fiber': 'FiberPerGram',
                     }
-
-    def __init__(self, recipeId):
-        self.recipeId = recipeId
-        self.base_servings = None
-
-        # Initialize all nutrition info and set class values. 
+    
+    def __init__(self, calories, protein, carbs, fat, fiber, servings):
+        self.servings = servings
+        self.calories = calories
+        self.protein = protein
+        self.carbs = carbs
+        self.fat = fat
+        self.fiber = fiber
+    
+    # To initialize a NutritionInfo object from DB values.
+    def from_recipe(recipeId):
+        # Create aggregation query to compute macros
         agg = ['SUM(ri.QuantityInGrams * i.' + col + ')' for col in NutritionInfo.nutrient_cols.values()]
         agg = ', '.join(agg)
 
-        nutrient_query = 'SELECT ' + agg + 'FROM RecipeIngredient ri \
+        nutrient_query = 'SELECT ' + agg + ' FROM RecipeIngredient ri \
                 JOIN Ingredient i ON ri.IngredientId = i.Id \
                 WHERE ri.RecipeId = ?;'
         
-        # Should we be checking here if the DB has been made?
-        # CHECK ABOUT FETCHALL, FETCHONE METHODS
         with sqlite3.connect('../db/recipes.db') as conn:
             cur = conn.cursor()
-            cur.execute(nutrient_query, (self.recipeId,))
-            self.calories, self.protein, self.carbs, self.fat, self.fiber = cur.fetchall()[0]
+            cur.execute(nutrient_query, (recipeId,))
+            calories, protein, carbs, fat, fiber = cur.fetchone()
 
-            cur.execute('SELECT BaseServings FROM Recipe WHERE Id = ?', (self.recipeId))
-            self.base_servings = cur.fetchone()[0]
+            # Set serving size
+            cur.execute('SELECT BaseServings FROM Recipe WHERE Id = ?', (recipeId,))
+            servings = cur.fetchone()[0]
             cur.close()
-
-    # Provide a dictionary to update totals with, e.g.
-    # {'protein': 16.0, 'fiber': 2.0} 
-    def set_macros(self, nutrients):
-        for macro,val in nutrients.items():
-            setattr(self, macro, val)
+        
+        return NutritionInfo(calories, protein, carbs, fat, fiber, servings)
     
     # Return a new NutritionInfo object scaled to the desired number of servings.
     def scale(self, desired_servings):
-        scaled_meal = NutritionInfo(self.recipeId)
-        ratio = desired_servings / self.base_servings
-        scaled_meal.set_macros({'protein': scaled_meal.protein * ratio,
-                                'calories': scaled_meal.calories * ratio,
-                                'carbs': scaled_meal.carbs * ratio,
-                                'fat': scaled_meal.fat * ratio,
-                                'fiber': scaled_meal.fiber * ratio})
+        base_servings = self.servings
+        ratio = desired_servings / base_servings
 
-        return scaled_meal
+        return NutritionInfo(self.calories * ratio, self.protein * ratio, self.carbs * ratio,
+                             self.fat * ratio, self.fiber * ratio, desired_servings)
