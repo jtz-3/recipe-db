@@ -36,7 +36,7 @@ CREATE TABLE RecipeIngredient (
     IngredientId INTEGER NOT NULL,
 
     Quantity REAL NOT NULL,
-    Unit TEXT NOT NULL,
+    Unit TEXT NOT NULL,     -- ADD CHECK HERE!!!!!!!!! --
 
     QuantityInGrams REAL NOT NULL,
 
