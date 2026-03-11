@@ -20,5 +20,7 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Misc
+# Misc (Obsidian)
+.md
+.obsidian
 .json
